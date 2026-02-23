@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS GESIT - Penugasan & Sertifikat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: transparent;
+        }
+
+        .loader {
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #059669;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 600: '#059669', 700: '#047857' }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body class="p-4 md:p-6 w-full min-h-[420px] flex flex-col items-center justify-center">
+
+    <!-- LOADING STATE -->
+    <div id="loadingState"
+        class="flex flex-col items-center justify-center p-10 bg-white rounded-2xl shadow-sm border border-gray-100 max-w-md w-full">
+        <div class="loader mb-4"></div>
+        <h3 class="text-gray-800 font-semibold text-center">Memuat Data Pelatihan...</h3>
+        <p class="text-xs text-gray-400 mt-1">Menghubungkan ke server</p>
+    </div>
+
+    <!-- ERROR STATE -->
+    <div id="errorState"
+        class="hidden flex-col items-center justify-center p-10 bg-white rounded-2xl shadow-sm border border-red-200 max-w-md w-full">
+        <div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center mb-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        <h3 class="text-red-700 font-bold text-center mb-1">Terjadi Kesalahan</h3>
+        <p id="errorMsg" class="text-sm text-center text-gray-500"></p>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="mainContent"
+        class="hidden w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden fade-in">
+
+        <!-- Header -->
+        <div class="p-6 bg-gradient-to-r from-primary-600 to-emerald-700 text-white">
+            <h2 id="pelatihanName" class="text-lg font-bold">Nama Pelatihan</h2>
+            <p class="text-emerald-100 text-sm mt-0.5">Selesaikan tugas dan unduh sertifikat Anda.</p>
+        </div>
+
+        <div class="p-5 md:p-6">
+
+            <!-- Pilih Nama -->
+            <div class="mb-5">
+                <label class="block text-sm font-bold text-gray-700 mb-2">Pilih Nama Anda</label>
+                <p class="text-xs text-gray-400 mb-2">Nama muncul jika Anda sudah mendaftar melalui web LMS.</p>
+                <select id="userSelect"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm">
+                    <option value="">-- Pilih Nama Anda --</option>
+                </select>
+            </div>
+
+            <!-- Status Card (shows AFTER selecting a name) -->
+            <div id="statusCard" class="hidden mb-5 fade-in"></div>
+
+            <!-- Tab Buttons -->
+            <div class="flex p-1 bg-gray-100 rounded-xl mb-5">
+                <button id="btnTabTugas" onclick="switchTab('tugas')"
+                    class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white shadow text-gray-800 transition-all">Kumpulkan
+                    Tugas</button>
+                <button id="btnTabSerti" onclick="switchTab('serti')"
+                    class="flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all">Sertifikat</button>
+            </div>
+
+            <!-- === TAB: TUGAS === -->
+            <div id="tugasSection" class="p-5 border border-gray-200 rounded-xl bg-gray-50/80 fade-in">
+                <h3 class="text-base font-bold text-gray-800 mb-1">Unggah Tugas</h3>
+                <p class="text-xs text-gray-500 mb-4">Pilih file (PDF, Gambar, Word) lalu klik unggah. Tugas akan
+                    diverifikasi oleh panitia.</p>
+                <input type="file" id="fileUpload"
+                    class="block w-full text-sm text-gray-500 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4" />
+                <button id="btnSubmitTugas" onclick="doUploadTugas()"
+                    class="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                    <span id="txtSubmitTugas">Unggah Tugas</span>
+                </button>
+                <div id="tugasResult" class="hidden mt-3 p-3 rounded-lg text-sm font-medium text-center"></div>
+            </div>
+
+            <!-- === TAB: SERTIFIKAT === -->
+            <div id="sertiSection" class="hidden p-5 border border-gray-200 rounded-xl bg-gray-50/80 fade-in">
+                <h3 class="text-base font-bold text-gray-800 mb-1">Sertifikat Pelatihan</h3>
+                <p class="text-xs text-gray-500 mb-4">Sertifikat akan tersedia setelah tugas Anda diverifikasi dan
+                    disetujui oleh panitia.</p>
+                <div id="sertiContent" class="text-center py-6">
+                    <p class="text-sm text-gray-400 italic">Silakan pilih nama Anda terlebih dahulu.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const currentTrainingId = "<?= trainingId ?>";
+        let trainingMetadata = null;
+        let participants = [];
+        let selectedParticipant = null;
+
+        // ========================================
+        // INIT
+        // ========================================
+        window.onload = function () {
+            if (!currentTrainingId || currentTrainingId === "undefined") {
+                showError('ID Pelatihan tidak ditemukan di URL.');
+                return;
+            }
+            google.script.run
+                .withSuccessHandler(onMetadataSuccess)
+                .withFailureHandler(onFailure)
+                .getTrainingMetadata(currentTrainingId);
+        };
+
+        function onMetadataSuccess(res) {
+            if (!res.success) { showError(res.message); return; }
+            trainingMetadata = res.data;
+            document.getElementById('pelatihanName').innerText = trainingMetadata.name;
+            google.script.run
+                .withSuccessHandler(onParticipantSuccess)
+                .withFailureHandler(onFailure)
+                .getParticipants(currentTrainingId);
+        }
+
+        function onParticipantSuccess(res) {
+            document.getElementById('loadingState').classList.add('hidden');
+            if (!res.success) { showError(res.message); return; }
+            participants = res.data;
+            const select = document.getElementById('userSelect');
+            participants.forEach(p => {
+                let opt = document.createElement('option');
+                opt.value = p.id;
+                opt.text = p.nama + (p.lembaga ? ` — ${p.lembaga}` : '');
+                select.appendChild(opt);
+            });
+            document.getElementById('mainContent').classList.remove('hidden');
+        }
+
+        function onFailure(err) { showError('Gagal menghubungi server: ' + err.message); }
+
+        function showError(msg) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('mainContent').classList.add('hidden');
+            const el = document.getElementById('errorState');
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+            document.getElementById('errorMsg').innerText = msg;
+        }
+
+        // ========================================
+        // SELECT USER → Show Status
+        // ========================================
+        document.getElementById('userSelect').addEventListener('change', function (e) {
+            const regId = e.target.value;
+            selectedParticipant = participants.find(p => p.id === regId) || null;
+            renderStatusCard();
+            renderSertiSection();
+        });
+
+        function renderStatusCard() {
+            const card = document.getElementById('statusCard');
+            if (!selectedParticipant) { card.classList.add('hidden'); return; }
+
+            const asg = selectedParticipant.assignment;
+            let statusHtml = '';
+
+            if (!asg) {
+                statusHtml = `
+          <div class="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-gray-50">
+            <div class="w-9 h-9 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-700">Belum Mengumpulkan Tugas</p>
+              <p class="text-xs text-gray-400">Silakan unggah tugas Anda pada tab "Kumpulkan Tugas".</p>
+            </div>
+          </div>`;
+            } else if (asg.status === 'pending') {
+                statusHtml = `
+          <div class="flex items-center gap-3 p-4 rounded-xl border border-amber-200 bg-amber-50">
+            <div class="w-9 h-9 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-amber-800">Menunggu Verifikasi Panitia</p>
+              <p class="text-xs text-amber-600">Tugas Anda sedang diperiksa. Harap tunggu konfirmasi.</p>
+            </div>
+          </div>`;
+            } else if (asg.status === 'valid') {
+                statusHtml = `
+          <div class="flex items-center gap-3 p-4 rounded-xl border border-emerald-200 bg-emerald-50">
+            <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-emerald-800">Tugas Disetujui ✓</p>
+              <p class="text-xs text-emerald-600">Sertifikat Anda tersedia di tab "Sertifikat".</p>
+            </div>
+          </div>`;
+            } else if (asg.status === 'invalid') {
+                statusHtml = `
+          <div class="flex items-start gap-3 p-4 rounded-xl border border-red-200 bg-red-50">
+            <div class="w-9 h-9 rounded-full bg-red-100 text-red-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-red-800">Tugas Ditolak</p>
+              <p class="text-xs text-red-600 mt-0.5"><strong>Catatan Panitia:</strong> ${asg.feedback || 'Tidak memenuhi kriteria.'}</p>
+              <p class="text-xs text-red-500 mt-1">Anda bisa mengunggah ulang tugas yang telah diperbaiki.</p>
+            </div>
+          </div>`;
+            }
+
+            card.innerHTML = statusHtml;
+            card.classList.remove('hidden');
+        }
+
+        // ========================================
+        // TAB SWITCHING
+        // ========================================
+        function switchTab(tab) {
+            const btnTugas = document.getElementById('btnTabTugas');
+            const btnSerti = document.getElementById('btnTabSerti');
+            const secTugas = document.getElementById('tugasSection');
+            const secSerti = document.getElementById('sertiSection');
+            if (tab === 'tugas') {
+                btnTugas.className = "flex-1 py-2 text-sm font-semibold rounded-lg bg-white shadow text-gray-800 transition-all";
+                btnSerti.className = "flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all";
+                secTugas.classList.remove('hidden'); secSerti.classList.add('hidden');
+            } else {
+                btnSerti.className = "flex-1 py-2 text-sm font-semibold rounded-lg bg-white shadow text-gray-800 transition-all";
+                btnTugas.className = "flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all";
+                secSerti.classList.remove('hidden'); secTugas.classList.add('hidden');
+            }
+        }
+
+        // ========================================
+        // SERTIFIKAT SECTION RENDER
+        // ========================================
+        function renderSertiSection() {
+            const container = document.getElementById('sertiContent');
+            if (!selectedParticipant) {
+                container.innerHTML = '<p class="text-sm text-gray-400 italic py-4">Silakan pilih nama Anda terlebih dahulu.</p>';
+                return;
+            }
+
+            const asg = selectedParticipant.assignment;
+            const certUrl = selectedParticipant.certificate_url;
+
+            if (!asg) {
+                container.innerHTML = `
+          <div class="py-6 text-center">
+            <div class="w-14 h-14 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-3">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <p class="text-sm font-semibold text-gray-600">Anda belum mengumpulkan tugas</p>
+            <p class="text-xs text-gray-400 mt-1">Kumpulkan tugas Anda terlebih dahulu.</p>
+          </div>`;
+            } else if (asg.status === 'pending') {
+                container.innerHTML = `
+          <div class="py-6 text-center">
+            <div class="w-14 h-14 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-3">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <p class="text-sm font-semibold text-amber-700">Menunggu Verifikasi Panitia</p>
+            <p class="text-xs text-gray-400 mt-1">Sertifikat akan tersedia setelah tugas Anda disetujui.</p>
+          </div>`;
+            } else if (asg.status === 'invalid') {
+                container.innerHTML = `
+          <div class="py-6 text-center">
+            <div class="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto mb-3">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </div>
+            <p class="text-sm font-semibold text-red-700">Tugas Belum Memenuhi Syarat</p>
+            <p class="text-xs text-gray-500 mt-1 px-4"><strong>Catatan:</strong> ${asg.feedback || 'Tugas tidak memenuhi kriteria.'}</p>
+            <p class="text-xs text-gray-400 mt-2">Silakan perbaiki dan unggah ulang tugas Anda.</p>
+          </div>`;
+            } else if (asg.status === 'valid' && certUrl) {
+                container.innerHTML = `
+          <div class="py-6 text-center fade-in">
+            <div class="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>
+            </div>
+            <p class="text-sm font-bold text-emerald-800 mb-1">Selamat! Sertifikat Anda Tersedia 🎉</p>
+            <p class="text-xs text-gray-500 mb-4">Klik tombol di bawah untuk mengunduh sertifikat.</p>
+            <a href="${certUrl}" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/30 transition-all">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              Download Sertifikat (PDF)
+            </a>
+          </div>`;
+            } else if (asg.status === 'valid' && !certUrl) {
+                container.innerHTML = `
+          <div class="py-6 text-center">
+            <div class="w-14 h-14 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mx-auto mb-3">
+              <div class="loader !border-t-blue-500"></div>
+            </div>
+            <p class="text-sm font-semibold text-blue-700">Sertifikat Sedang Disiapkan</p>
+            <p class="text-xs text-gray-400 mt-1">Tugas sudah disetujui. PDF sertifikat sedang diproses.</p>
+          </div>`;
+            }
+        }
+
+        // ========================================
+        // UPLOAD TUGAS
+        // ========================================
+        function doUploadTugas() {
+            const regId = document.getElementById('userSelect').value;
+            if (!regId) {
+                Swal.fire({
+                    title: 'Peringatan',
+                    text: 'Harap pilih nama Anda!',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            const fileInput = document.getElementById('fileUpload');
+            if (fileInput.files.length === 0) {
+                Swal.fire({
+                    title: 'Peringatan',
+                    text: 'Harap pilih file!',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            const btn = document.getElementById('btnSubmitTugas');
+            const txt = document.getElementById('txtSubmitTugas');
+            const resultDiv = document.getElementById('tugasResult');
+
+            btn.disabled = true;
+            txt.innerHTML = '<span class="loader !w-4 !h-4 !border-2"></span> Mengunggah...';
+            resultDiv.classList.add('hidden');
+
+            reader.onload = function (e) {
+                google.script.run
+                    .withSuccessHandler((res) => {
+                        btn.disabled = false;
+                        txt.innerText = 'Unggah Tugas';
+                        resultDiv.classList.remove('hidden');
+                        if (res.success) {
+                            resultDiv.className = 'mt-3 p-3 rounded-lg text-sm font-medium text-center bg-emerald-100 text-emerald-800';
+                            resultDiv.innerHTML = '✅ Tugas berhasil diunggah! Status: <strong>Menunggu Verifikasi</strong>';
+                            fileInput.value = '';
+                            // Update local state
+                            if (selectedParticipant) {
+                                selectedParticipant.assignment = { status: 'pending', file_url: res.url };
+                                renderStatusCard();
+                                renderSertiSection();
+                            }
+                        } else {
+                            resultDiv.className = 'mt-3 p-3 rounded-lg text-sm font-medium text-center bg-red-100 text-red-800';
+                            resultDiv.innerText = '❌ ' + res.message;
+                        }
+                    })
+                    .withFailureHandler((err) => {
+                        btn.disabled = false;
+                        txt.innerText = 'Unggah Tugas';
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Upload error: ' + err.message,
+                            icon: 'error',
+                            confirmButtonText: 'Tutup'
+                        });
+                    })
+                    .uploadAssignment(currentTrainingId, regId, e.target.result, file.name, trainingMetadata);
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+
+</html>

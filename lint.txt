@@ -1,0 +1,28 @@
+
+> lms-admin@0.1.0 lint
+> eslint
+
+
+D:\code\LMS_admin\lms-admin\middleware.ts
+  4:28  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\code\LMS_admin\lms-admin\src\app\(auth)\login\actions.ts
+  3:10  warning  'createClient' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\code\LMS_admin\lms-admin\src\app\(dashboard)\trainings\actions.ts
+   8:38  warning  'id' is defined but never used        @typescript-eslint/no-unused-vars
+   8:50  warning  'formData' is defined but never used  @typescript-eslint/no-unused-vars
+  12:38  warning  'id' is defined but never used        @typescript-eslint/no-unused-vars
+
+D:\code\LMS_admin\lms-admin\src\app\(dashboard)\trainings\page.tsx
+  117:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\code\LMS_admin\lms-admin\src\app\admin\page.tsx
+  8:10  warning  'Training' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\code\LMS_admin\lms-admin\src\lib\supabase-server.ts
+  18:30  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  27:30  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+Γ£û 9 problems (1 error, 8 warnings)
+

@@ -1,0 +1,3 @@
+id,category_id,month_index,name,duration,youtube_id,vimeo_id,google_drive_id,video_url,materi,pdf_path,is_paid,price,created_at
+4429c670-99cd-47f9-84fe-e68c5b1b473a,tk,0,Metode Montessori Dasar,2 Hari,dQw4w9WgXcQ,,,,Materi Montessori dari database Supabase.,,false,0.00,2026-02-18 22:49:27.975687+00
+9c91dc16-0dc0-47cd-865b-89fbdf3bb9cb,tk,1,pelatihan bulan febuari,1 hari,aQPz8AAH51I,,,,materi 1,,false,0.00,2026-02-18 23:17:13.212756+00
