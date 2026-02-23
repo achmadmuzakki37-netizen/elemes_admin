@@ -52,6 +52,15 @@ export async function updateTraining(id: string, training: Partial<Training>) {
 
 export async function deleteTraining(id: string) {
     const supabase = await createClient()
+
+    // Delete associated registrations first to prevent foreign key constraint violations
+    const { error: regError } = await supabase
+        .from('registrations')
+        .delete()
+        .eq('training_id', id)
+
+    if (regError) throw new Error(`Failed to delete related registrations: ${regError.message}`)
+
     const { error } = await supabase
         .from('trainings')
         .delete()
