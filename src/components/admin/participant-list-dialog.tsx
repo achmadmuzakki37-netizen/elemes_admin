@@ -75,7 +75,7 @@ export function ParticipantListDialog({ trainingName, participants }: Participan
                                         <TableCell className="py-4 px-6">
                                             <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-black uppercase">
                                                 <Calendar className="w-3 h-3 opacity-50" />
-                                                {p.created_at ? new Date(p.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                                                {p.registered_at ? new Date(p.registered_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                                             </div>
                                         </TableCell>
                                     </TableRow>

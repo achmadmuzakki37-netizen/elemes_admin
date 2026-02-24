@@ -38,7 +38,7 @@ export interface Registration {
     lembaga?: string;
     status?: 'pending' | 'valid' | 'invalid';
     certificate_url?: string;
-    created_at?: string;
+    registered_at?: string;
 }
 
 export interface Assignment {

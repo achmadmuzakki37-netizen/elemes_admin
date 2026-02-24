@@ -16,7 +16,7 @@ export async function getParticipantsDashboardData() {
     ] = await Promise.all([
         supabase.from('categories').select('*').order('title'),
         supabase.from('trainings').select('*').order('created_at', { ascending: false }),
-        supabase.from('registrations').select('*').order('created_at', { ascending: false })
+        supabase.from('registrations').select('*').order('registered_at', { ascending: false })
     ])
 
     if (catError) throw new Error(`Error fetching categories: ${catError.message}`)
