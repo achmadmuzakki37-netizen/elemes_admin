@@ -4,10 +4,13 @@ import { createClient } from '@/lib/supabase-server'
 import { AssignmentWithDetails } from '@/types'
 import { revalidatePath } from 'next/cache'
 
+import { unstable_noStore as noStore } from 'next/cache';
+
 /**
  * Mengambil semua data tugas (assignments) beserta detail registrasi dan pelatihannya.
  */
 export async function getAssignments() {
+    noStore();
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('assignments')

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { supabase } from '@/lib/supabase-client'
 import { AssignmentWithDetails, Category, Training } from '@/types'
 import { TableBody, TableCell, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -31,12 +32,28 @@ interface ValidasiTableProps {
 
 export function ValidasiTable({ assignments, categories, trainings }: ValidasiTableProps) {
     const router = useRouter()
+
+    useEffect(() => {
+        const channel = supabase.channel('realtime:assignments')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'assignments' },
+                () => {
+                    router.refresh()
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [router])
     const [itemsPerPage, setItemsPerPage] = useState<string>('10')
     const [currentPage, setCurrentPage] = useState(1)
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedCategory, setSelectedCategory] = useState<string>('all')
     const [selectedTraining, setSelectedTraining] = useState<string>('all')
-    const [selectedStatus, setSelectedStatus] = useState<string>('pending') // Default to pending as it's the priority
+    const [selectedStatus, setSelectedStatus] = useState<string>('all') // Default to all as requested
     const [selectedAssignment, setSelectedAssignment] = useState<AssignmentWithDetails | null>(null)
     const [isSheetOpen, setIsSheetOpen] = useState(false)
 
@@ -58,8 +75,10 @@ export function ValidasiTable({ assignments, categories, trainings }: ValidasiTa
             const training = getData(item.trainings)
 
             const matchesSearch =
-                registration?.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                training?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+                (registration?.nama?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                (registration?.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                (registration?.lembaga?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                (training?.name?.toLowerCase() || '').includes(searchTerm.toLowerCase())
 
             const matchesCategory =
                 selectedCategory === 'all' ||
@@ -192,9 +211,15 @@ export function ValidasiTable({ assignments, categories, trainings }: ValidasiTa
                                         >
                                             <TableCell className="px-6 py-5">
                                                 <div className="font-bold text-zinc-900 dark:text-zinc-100 text-[15px] tracking-tight leading-tight">{registration?.nama}</div>
+                                                {registration?.lembaga && (
+                                                    <div className="text-[11px] text-zinc-500 font-medium mt-0.5">{registration?.lembaga}</div>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">{registration?.email}</div>
+                                                {registration?.phone && (
+                                                    <div className="text-[11px] text-zinc-400 font-medium mt-0.5">{registration?.phone}</div>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="font-semibold text-zinc-700 dark:text-zinc-300 text-sm">{training?.name}</div>

@@ -4,7 +4,10 @@ import { createClient } from '@/lib/supabase-server'
 import { Training, Category } from '@/types'
 import { revalidatePath } from 'next/cache'
 
+import { unstable_noStore as noStore } from 'next/cache';
+
 export async function getTrainings() {
+    noStore();
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('trainings')
@@ -16,6 +19,7 @@ export async function getTrainings() {
 }
 
 export async function getCategories() {
+    noStore();
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('categories')

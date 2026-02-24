@@ -35,6 +35,7 @@ export interface Registration {
     nama: string;
     email: string;
     phone?: string;
+    lembaga?: string;
     status?: 'pending' | 'valid' | 'invalid';
     certificate_url?: string;
     created_at?: string;
