@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Home, BookOpen, ChevronLeft, ChevronRight, Menu, CheckCircle } from 'lucide-react'
+import { Home, BookOpen, ChevronLeft, ChevronRight, Menu, CheckCircle, Users } from 'lucide-react'
 import { LogoutButton } from './logout-button'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -10,6 +10,7 @@ const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/trainings', label: 'Pelatihan', icon: BookOpen },
     { href: '/validasi', label: 'Validasi', icon: CheckCircle },
+    { href: '/peserta', label: 'Peserta', icon: Users },
 ]
 
 export function Sidebar() {
