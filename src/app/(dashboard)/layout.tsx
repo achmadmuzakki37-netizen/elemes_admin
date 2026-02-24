@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { Toaster } from '@/components/ui/sonner';
 import { Sidebar } from '@/components/admin/sidebar';
 

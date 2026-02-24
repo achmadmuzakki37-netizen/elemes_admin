@@ -1,3 +1,7 @@
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 import { getAssignments } from './actions'
 import { getCategories, getTrainings } from '@/app/(dashboard)/trainings/trainings-actions'
 import { ValidasiTable } from '@/components/admin/validasi-table'

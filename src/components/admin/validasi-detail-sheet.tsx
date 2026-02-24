@@ -96,7 +96,18 @@ export function ValidasiDetailSheet({ assignment, onSuccess }: ValidasiDetailShe
                                 <User className="w-3 h-3" /> Informasi Peserta
                             </Label>
                             <div className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{registration?.nama}</div>
-                            <div className="text-xs text-zinc-500 font-medium">{registration?.email}</div>
+                            {registration?.lembaga && (
+                                <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{registration?.lembaga}</div>
+                            )}
+                            <div className="flex items-center gap-2 mt-1">
+                                <div className="text-xs text-zinc-500 font-medium">{registration?.email}</div>
+                                {registration?.phone && (
+                                    <>
+                                        <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                                        <div className="text-xs text-zinc-500 font-medium">{registration?.phone}</div>
+                                    </>
+                                )}
+                            </div>
                         </div>
 
                         <div className="h-px bg-zinc-200/50 dark:bg-zinc-800" />
