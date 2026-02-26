@@ -12,8 +12,8 @@ import { RegistrationToggle } from '@/components/admin/registration-toggle'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Filter, X } from 'lucide-react'
+import { Filter, X, Image as ImageIcon } from 'lucide-react'
+import Image from 'next/image'
 
 const INDONESIAN_MONTHS = [
     'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -204,9 +204,22 @@ export function TrainingTable({ trainings, categories }: TrainingTableProps) {
                                     className="group hover:bg-white dark:hover:bg-zinc-900 even:bg-slate-100/50 dark:even:bg-white/[0.04] transition-all duration-300 border-zinc-100 dark:border-zinc-800 cursor-default hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-black/50 hover:relative hover:z-10"
                                 >
                                     <TableCell className="px-6 py-5">
-                                        <div className="font-bold text-zinc-900 dark:text-zinc-100 text-[15px] tracking-tight leading-tight">{training.name}</div>
-                                        <div className="flex items-center gap-3 mt-1.5 text-xs text-zinc-500 font-medium">
-                                            <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {training.duration}</span>
+                                        <div className="flex items-center gap-4">
+                                            {training.banner_url ? (
+                                                <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-800 shadow-sm transition-transform hover:scale-150 hover:z-50 hover:shadow-xl cursor-zoom-in">
+                                                    <Image src={training.banner_url} alt={training.name} fill className="object-cover" />
+                                                </div>
+                                            ) : (
+                                                <div className="w-12 h-12 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 border border-zinc-200/50 dark:border-zinc-800 shadow-inner">
+                                                    <ImageIcon className="w-5 h-5 text-zinc-400 opacity-30" />
+                                                </div>
+                                            )}
+                                            <div>
+                                                <div className="font-bold text-zinc-900 dark:text-zinc-100 text-[15px] tracking-tight leading-tight">{training.name}</div>
+                                                <div className="flex items-center gap-3 mt-1.5 text-xs text-zinc-500 font-medium">
+                                                    <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {training.duration}</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell>

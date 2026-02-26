@@ -107,7 +107,7 @@ export function ValidasiTable({ assignments, categories, trainings }: ValidasiTa
         setSearchTerm('')
         setSelectedCategory('all')
         setSelectedTraining('all')
-        setSelectedStatus('pending')
+        setSelectedStatus('all')
         setCurrentPage(1)
     }
 
@@ -120,67 +120,70 @@ export function ValidasiTable({ assignments, categories, trainings }: ValidasiTa
         <Card className="flex-1 flex flex-col border-none shadow-2xl shadow-zinc-200/50 dark:shadow-zinc-950/50 bg-white dark:bg-zinc-950 overflow-hidden ring-1 ring-zinc-200/50 dark:ring-zinc-800 relative">
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-600 z-40" />
 
-            {/* Table Tools */}
-            <div className="shrink-0 px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 flex flex-col gap-4 bg-white dark:bg-zinc-950 z-30">
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1 max-w-md relative">
+            <div className="shrink-0 px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-4 bg-white dark:bg-zinc-950 z-30">
+                <div className="flex items-center gap-3 flex-1 overflow-x-auto no-scrollbar py-1">
+                    {/* Search */}
+                    <div className="w-[300px] shrink-0 relative">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                         <Input
                             placeholder="Cari nama peserta atau pelatihan..."
                             value={searchTerm}
                             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                            className="pl-11 bg-zinc-50 dark:bg-zinc-900/50 border-none ring-1 ring-zinc-200 dark:ring-zinc-800 focus-visible:ring-emerald-500 transition-all rounded-xl h-11 text-sm font-medium"
+                            className="pl-11 bg-zinc-50 dark:bg-zinc-900/50 border-none ring-1 ring-zinc-200 dark:ring-zinc-800 focus-visible:ring-emerald-500 transition-all rounded-xl h-10 text-xs font-medium"
                         />
                     </div>
-                </div>
 
-                <div className="flex items-center gap-3 shrink-0 py-1 overflow-x-auto no-scrollbar">
-                    <Select value={selectedCategory} onValueChange={(v) => { setSelectedCategory(v); setSelectedTraining('all'); setCurrentPage(1); }}>
-                        <SelectTrigger className="w-[160px] h-9 text-xs font-bold border-none bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors rounded-lg">
-                            <SelectValue placeholder="Kategori" />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                            <SelectItem value="all">Semua Kategori</SelectItem>
-                            {categories.map((c) => (
-                                <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 shrink-0 mx-1" />
 
-                    <Select value={selectedTraining} onValueChange={(v) => { setSelectedTraining(v); setCurrentPage(1); }}>
-                        <SelectTrigger className="w-[200px] h-9 text-xs font-bold border-none bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors rounded-lg">
-                            <SelectValue placeholder="Pelatihan" />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                            <SelectItem value="all">Semua Pelatihan</SelectItem>
-                            {filteredTrainingList.map((t) => (
-                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    {/* Filters */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Select value={selectedCategory} onValueChange={(v) => { setSelectedCategory(v); setSelectedTraining('all'); setCurrentPage(1); }}>
+                            <SelectTrigger className="w-[150px] h-9 text-xs font-bold border-none bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors rounded-lg">
+                                <SelectValue placeholder="Kategori" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                <SelectItem value="all">Semua Kategori</SelectItem>
+                                {categories.map((c) => (
+                                    <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
 
-                    <Select value={selectedStatus} onValueChange={(v) => { setSelectedStatus(v); setCurrentPage(1); }}>
-                        <SelectTrigger className="w-[140px] h-9 text-xs font-bold border-none bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors rounded-lg">
-                            <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                            <SelectItem value="all">Semua Status</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="valid">Valid</SelectItem>
-                            <SelectItem value="invalid">Invalid</SelectItem>
-                        </SelectContent>
-                    </Select>
+                        <Select value={selectedTraining} onValueChange={(v) => { setSelectedTraining(v); setCurrentPage(1); }}>
+                            <SelectTrigger className="w-[180px] h-9 text-xs font-bold border-none bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors rounded-lg">
+                                <SelectValue placeholder="Pelatihan" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                <SelectItem value="all">Semua Pelatihan</SelectItem>
+                                {filteredTrainingList.map((t) => (
+                                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
 
-                    {(searchTerm || selectedCategory !== 'all' || selectedStatus !== 'all' || selectedTraining !== 'all') && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleReset}
-                            className="h-8 w-8 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 rounded-full shrink-0"
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    )}
+                        <Select value={selectedStatus} onValueChange={(v) => { setSelectedStatus(v); setCurrentPage(1); }}>
+                            <SelectTrigger className="w-[130px] h-9 text-xs font-bold border-none bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors rounded-lg">
+                                <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                <SelectItem value="all">Semua Status</SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="valid">Valid</SelectItem>
+                                <SelectItem value="invalid">Invalid</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        {(searchTerm || selectedCategory !== 'all' || selectedStatus !== 'all' || selectedTraining !== 'all') && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleReset}
+                                className="h-8 w-8 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 rounded-full shrink-0"
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </div>
 

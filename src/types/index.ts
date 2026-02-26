@@ -25,6 +25,7 @@ export interface Training {
     drive_folder_id?: string;
     certificate_folder_id?: string;
     registration_status?: 'open' | 'close';
+    banner_url?: string;
     created_at?: string;
 }
 
@@ -38,7 +39,7 @@ export interface Registration {
     lembaga?: string;
     status?: 'pending' | 'valid' | 'invalid';
     certificate_url?: string;
-    created_at?: string;
+    registered_at?: string;
 }
 
 export interface Assignment {
@@ -48,10 +49,23 @@ export interface Assignment {
     file_url: string;
     status: 'pending' | 'valid' | 'invalid';
     feedback?: string;
+    validator_id?: string;
+    created_at?: string;
+}
+
+export interface Profile {
+    id: string;
+    username?: string;
+    full_name?: string;
+    avatar_url?: string;
+    website?: string;
+    role: string;
+    updated_at: string;
     created_at?: string;
 }
 
 export interface AssignmentWithDetails extends Assignment {
     registrations: Registration | Registration[];
     trainings: Training | Training[];
+    validator?: { full_name: string } | { full_name: string }[];
 }

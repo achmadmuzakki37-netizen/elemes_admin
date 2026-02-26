@@ -9,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { createTraining, updateTraining } from '@/app/(dashboard)/trainings/trainings-actions'
 import { DialogClose } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { ChevronRight, ChevronLeft, Check, BookOpen, Video, DollarSign, Settings } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Check, BookOpen, Video, DollarSign, Settings, Image as ImageIcon, Upload, X } from 'lucide-react'
+import { supabase } from '@/lib/supabase-client'
+import Image from 'next/image'
 
 // Helper function to extract ID from Google Drive/Slides URL
 function extractGoogleId(url: string): string {
@@ -47,7 +49,26 @@ export function TrainingForm({ categories, training, onSuccess }: TrainingFormPr
     const [step, setStep] = useState(1)
     const [isStep1Valid, setIsStep1Valid] = useState(false)
     const [submitEnabled, setSubmitEnabled] = useState(true)
+    const [bannerFile, setBannerFile] = useState<File | null>(null)
+    const [bannerPreview, setBannerPreview] = useState<string | null>(training?.banner_url || null)
     const formRef = useRef<HTMLFormElement>(null)
+
+    const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setBannerFile(file)
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setBannerPreview(reader.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    const clearBanner = () => {
+        setBannerFile(null)
+        setBannerPreview(null)
+    }
 
     const checkValidity = () => {
         if (!formRef.current) return;
@@ -99,6 +120,31 @@ export function TrainingForm({ categories, training, onSuccess }: TrainingFormPr
                 return;
             }
 
+            // Handle Banner Upload if there is a new file
+            let banner_url = training?.banner_url;
+
+            if (bannerFile) {
+                const fileExt = bannerFile.name.split('.').pop();
+                const filePath = `banner-${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('img')
+                    .upload(filePath, bannerFile);
+
+                if (uploadError) {
+                    throw uploadError;
+                }
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('img')
+                    .getPublicUrl(filePath);
+
+                banner_url = publicUrl;
+            } else if (bannerPreview === null) {
+                // User cleared the banner
+                banner_url = undefined;
+            }
+
             // Extract IDs from URLs
             const certificateTemplateUrl = formData.get('certificate_template_url') as string;
             const driveFolderUrl = formData.get('drive_folder_url') as string;
@@ -109,6 +155,7 @@ export function TrainingForm({ categories, training, onSuccess }: TrainingFormPr
                 category_id,
                 month_index: parseInt(formData.get('month_index') as string) || 0,
                 duration,
+                banner_url,
                 youtube_id: (formData.get('youtube_id') as string) || undefined,
                 vimeo_id: (formData.get('vimeo_id') as string) || undefined,
                 google_drive_id: (formData.get('google_drive_id') as string) || undefined,
@@ -243,6 +290,63 @@ export function TrainingForm({ categories, training, onSuccess }: TrainingFormPr
                                     type="time"
                                     defaultValue={training?.time}
                                     className="bg-zinc-50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 transition-colors focus:bg-white dark:focus:bg-zinc-900"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Banner Upload Field */}
+                        <div className="space-y-3">
+                            <Label className="text-zinc-700 dark:text-zinc-300">Banner Pelatihan (Recommended 16:9)</Label>
+                            <div className="relative group">
+                                {bannerPreview ? (
+                                    <div className="relative aspect-video w-full rounded-2xl overflow-hidden border-2 border-dashed border-zinc-200 dark:border-zinc-800 shadow-inner group">
+                                        <Image
+                                            src={bannerPreview}
+                                            alt="Banner Preview"
+                                            fill
+                                            className="object-cover"
+                                        />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="sm"
+                                                className="rounded-full font-bold"
+                                                onClick={() => document.getElementById('banner-upload')?.click()}
+                                            >
+                                                <Upload className="w-4 h-4 mr-2" /> Ganti Gambar
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="destructive"
+                                                size="sm"
+                                                className="rounded-full font-bold"
+                                                onClick={clearBanner}
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div
+                                        onClick={() => document.getElementById('banner-upload')?.click()}
+                                        className="aspect-video w-full rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center gap-3 bg-zinc-50 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-all cursor-pointer group shadow-inner"
+                                    >
+                                        <div className="w-12 h-12 rounded-2xl bg-white dark:bg-zinc-800 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                            <ImageIcon className="w-6 h-6 text-zinc-400 group-hover:text-emerald-500 transition-colors" />
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-sm font-bold text-zinc-600 dark:text-zinc-400">Klik untuk upload banner</p>
+                                            <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">PNG, JPG, atau WebP (Max. 2MB)</p>
+                                        </div>
+                                    </div>
+                                )}
+                                <input
+                                    id="banner-upload"
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handleBannerChange}
                                 />
                             </div>
                         </div>
