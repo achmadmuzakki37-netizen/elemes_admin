@@ -1,13 +1,11 @@
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
-
+import { Suspense } from 'react'
 import { getParticipantsDashboardData } from './actions'
 import { PesertaClient } from '@/components/admin/peserta-client'
-import { Users2 } from 'lucide-react'
+import Loading from '../loading'
 
 export default async function PesertaPage() {
-    const { categories, trainings, registrations, assignments } = await getParticipantsDashboardData()
+    // Initiate fetch but don't await it here
+    const dataPromise = getParticipantsDashboardData()
 
     return (
         <div className="flex flex-col space-y-6">
@@ -20,12 +18,9 @@ export default async function PesertaPage() {
                 </p>
             </header>
 
-            <PesertaClient
-                categories={categories}
-                trainings={trainings}
-                registrations={registrations}
-                assignments={assignments}
-            />
+            <Suspense fallback={<Loading />}>
+                <PesertaClient dataPromise={dataPromise} />
+            </Suspense>
         </div>
     )
 }

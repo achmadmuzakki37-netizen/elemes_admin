@@ -1,6 +1,6 @@
 'use client'
 
-import { use, Suspense } from 'react'
+import { use, Suspense, useState, useEffect } from 'react'
 import {
     AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -145,12 +145,18 @@ const ChartTooltip = ({ active, payload, label }: { active?: boolean; payload?: 
 
 // ─── Sub-Components ──────────────────────────────────────────────────────────
 
-function GreetingSection({ metricsPromise, profilePromise }: { metricsPromise: Promise<any>, profilePromise: Promise<Profile | null> }) {
+function GreetingSection({ metricsPromise, profilePromise, clientHour }: { metricsPromise: Promise<any>, profilePromise: Promise<Profile | null>, clientHour?: number }) {
     const metrics = use(metricsPromise)
     const profile = use(profilePromise)
-    const hour = new Date().getHours()
+
+    // Default to morning if not yet determined or simplified
+    const hour = clientHour ?? 8
     const { greeting, message, Icon: GreetIcon, color, bg, border } = getGreeting(hour)
     const firstName = profile?.full_name ?? 'Admin'
+
+    // If clientHour is undefined, we might still be on server or very first hydration
+    // To avoid mismatch, we can hide the specific greeting text or use a non-time-dependent one
+    // But since it's wrapped in Suspense on the main component, clientHour will be set quickly.
 
     return (
         <div className={`relative border ${border} bg-gradient-to-r ${bg} rounded-2xl overflow-hidden`}>
@@ -232,7 +238,7 @@ function ChartsSection({ metricsPromise, trendPromise }: { metricsPromise: Promi
                         </div>
                         <TrendingUp className="h-4 w-4 text-emerald-500" />
                     </div>
-                    <div className="mt-4 h-56">
+                    <div className="mt-4 h-56 min-h-[224px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={trend} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                                 <defs>
@@ -259,7 +265,7 @@ function ChartsSection({ metricsPromise, trendPromise }: { metricsPromise: Promi
                         </div>
                         <Crown className="h-4 w-4 text-amber-500" />
                     </div>
-                    <div className="mt-2 h-48 flex items-center justify-center">
+                    <div className="mt-2 h-48 min-h-[192px] flex items-center justify-center">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie data={pieData} cx="50%" cy="50%" innerRadius={52} outerRadius={76} paddingAngle={3} dataKey="value" strokeWidth={0}>
@@ -292,7 +298,7 @@ function ChartsSection({ metricsPromise, trendPromise }: { metricsPromise: Promi
                         </div>
                         <Activity className="h-4 w-4 text-blue-500" />
                     </div>
-                    <div className="mt-4 h-48">
+                    <div className="mt-4 h-48 min-h-[192px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={validationData} margin={{ top: 4, right: 4, left: -30, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" className="dark:[&>line]:stroke-zinc-800" vertical={false} />
@@ -417,12 +423,24 @@ function RecentTrainingsGrid({ recentPromise }: { recentPromise: Promise<any> })
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function DashboardClient({ metricsPromise, recentPromise, trendPromise, profilePromise }: DashboardClientProps) {
+    const [currentTime, setCurrentTime] = useState<{ hour: number } | null>(null)
+
+    useEffect(() => {
+        // Set hour only on client side to avoid hydration mismatch
+        setCurrentTime({ hour: new Date().getHours() })
+    }, [])
+
+    // If time is not yet determined, show a placeholder or a default morning greeting
+    // but better to just show the skeleton style or nothing to be safe.
+    // However, the Suspense boundary outside GreetingSection already handles partial loading.
+    // Inside GreetingSection we also need to be careful.
+
     return (
         <div className="space-y-6">
 
             {/* Row 1: Greeting */}
             <Suspense fallback={<div className="h-48 rounded-2xl bg-zinc-100/50 dark:bg-zinc-800/50 animate-pulse" />}>
-                <GreetingSection metricsPromise={metricsPromise} profilePromise={profilePromise} />
+                <GreetingSection metricsPromise={metricsPromise} profilePromise={profilePromise} clientHour={currentTime?.hour} />
             </Suspense>
 
             {/* Row 2: Stats Grid */}
