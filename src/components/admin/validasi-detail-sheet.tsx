@@ -4,16 +4,32 @@ import { useState } from 'react'
 import { AssignmentWithDetails } from '@/types'
 import {
     SheetContent,
-    SheetDescription,
-    SheetHeader,
+    SheetClose,
     SheetTitle,
+    SheetDescription,
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { updateAssignmentStatus } from '@/app/(dashboard)/validasi/actions'
 import { toast } from 'sonner'
-import { BookOpen, User, FileText, CheckCircle2, XCircle, ExternalLink } from 'lucide-react'
+import {
+    BookOpen,
+    User,
+    FileText,
+    CheckCircle2,
+    XCircle,
+    ExternalLink,
+    ShieldCheck,
+    Clock,
+    Mail,
+    Phone,
+    Building2,
+    Award,
+    Loader2,
+    AlertTriangle,
+    X,
+} from 'lucide-react'
 
 interface ValidasiDetailSheetProps {
     assignment: AssignmentWithDetails | null
@@ -25,7 +41,6 @@ export function ValidasiDetailSheet({ assignment, onSuccess }: ValidasiDetailShe
     const [feedback, setFeedback] = useState('')
     const [isRejecting, setIsRejecting] = useState(false)
 
-    // Helper untuk normalisasi data dari Supabase (bisa berupa objek atau array)
     const getData = <T,>(data: T | T[]): T | undefined => {
         if (!data) return undefined
         return Array.isArray(data) ? data[0] : data
@@ -35,6 +50,7 @@ export function ValidasiDetailSheet({ assignment, onSuccess }: ValidasiDetailShe
 
     const registration = getData(assignment.registrations)
     const training = getData(assignment.trainings)
+    const validator = getData(assignment.validator)
 
     const handleAction = async (action: 'approve' | 'reject') => {
         if (action === 'reject' && !feedback.trim()) {
@@ -62,7 +78,6 @@ export function ValidasiDetailSheet({ assignment, onSuccess }: ValidasiDetailShe
         }
     }
 
-    // Helper untuk preview Google Drive
     const getPreviewUrl = (url: string) => {
         if (!url) return ''
         if (url.includes('drive.google.com')) {
@@ -71,180 +86,271 @@ export function ValidasiDetailSheet({ assignment, onSuccess }: ValidasiDetailShe
         return url
     }
 
-    return (
-        <SheetContent className="w-full sm:max-w-xl overflow-y-auto border-l-emerald-500/20 shadow-2xl">
-            <SheetHeader className="mb-8 relative">
-                <div className="absolute -left-12 -top-12 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -z-10" />
-                <SheetTitle className="text-2xl font-black italic tracking-tighter flex items-center gap-2 text-zinc-900 dark:text-zinc-100">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-500" /> VALIDASI TUGAS
-                </SheetTitle>
-                <SheetDescription className="font-medium text-zinc-500">
-                    Tinjau hasil kerja peserta dan tentukan status kelulusan modul ini.
-                </SheetDescription>
-            </SheetHeader>
+    const statusBadge = assignment.status === 'valid'
+        ? { label: 'VALID', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 ring-emerald-500/20' }
+        : assignment.status === 'invalid'
+            ? { label: 'DITOLAK', cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 ring-red-500/20' }
+            : { label: 'PENDING', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 ring-amber-500/20' }
 
-            <div className="space-y-8">
-                {/* Info Peserta & Pelatihan */}
-                <div className="grid grid-cols-1 gap-6 p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <User className="w-16 h-16" />
+    return (
+        <SheetContent
+            side="right"
+            showCloseButton={false}
+            className="p-0 border-l border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 overflow-hidden"
+            style={{ width: '80vw', maxWidth: '80vw' }}
+        >
+            {/* Accessible Title (visually hidden) */}
+            <SheetTitle className="sr-only">Review Tugas Peserta</SheetTitle>
+            <SheetDescription className="sr-only">Panel review dan validasi tugas peserta</SheetDescription>
+
+            {/* Top Bar */}
+            <div className="h-14 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-6 shrink-0">
+                <div className="flex items-center gap-3">
+                    <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Review Tugas</h2>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ring-1 ${statusBadge.cls}`}>
+                        {statusBadge.label}
+                    </span>
+                    {assignment.created_at && (
+                        <span className="text-[11px] text-zinc-400 font-medium flex items-center gap-1.5">
+                            <Clock className="w-3 h-3" />
+                            {new Date(assignment.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                    )}
+                </div>
+                <SheetClose asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500">
+                        <X className="w-5 h-5" />
+                    </Button>
+                </SheetClose>
+            </div>
+
+            {/* Two-Column Layout */}
+            <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100% - 3.5rem)' }}>
+
+                {/* ── LEFT COLUMN ── */}
+                <div className="overflow-y-auto p-6 space-y-5 custom-scrollbar" style={{ flex: '0 0 62%' }}>
+
+                    {/* Data Peserta - compact */}
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5">
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0 text-white font-black text-lg shadow-lg shadow-emerald-500/20">
+                                {registration?.nama?.charAt(0)?.toUpperCase() || '?'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-base font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                                    {registration?.nama}
+                                </div>
+                                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                                    {registration?.lembaga && (
+                                        <span className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
+                                            <Building2 className="w-3 h-3 opacity-60" /> {registration.lembaga}
+                                        </span>
+                                    )}
+                                    {registration?.email && (
+                                        <span className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
+                                            <Mail className="w-3 h-3 opacity-60" /> {registration.email}
+                                        </span>
+                                    )}
+                                    {registration?.phone && (
+                                        <span className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
+                                            <Phone className="w-3 h-3 opacity-60" /> {registration.phone}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="space-y-4">
-                        <div className="space-y-1">
-                            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-                                <User className="w-3 h-3" /> Informasi Peserta
-                            </Label>
-                            <div className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{registration?.nama}</div>
-                            {registration?.lembaga && (
-                                <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{registration?.lembaga}</div>
+                    {/* Modul */}
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 px-5 py-4 flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                            <BookOpen className="w-4 h-4 text-zinc-500" />
+                        </div>
+                        <div>
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">Modul Pelatihan</div>
+                            <div className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{training?.name}</div>
+                        </div>
+                    </div>
+
+                    {/* Lampiran Preview - scrollable */}
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                        <div className="px-5 py-3 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
+                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                <FileText className="w-3.5 h-3.5" /> Lampiran Tugas
+                            </h3>
+                            {assignment.file_url && (
+                                <a
+                                    href={assignment.file_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 transition-colors"
+                                >
+                                    Buka di Tab Baru <ExternalLink className="w-3 h-3" />
+                                </a>
                             )}
-                            <div className="flex items-center gap-2 mt-1">
-                                <div className="text-xs text-zinc-500 font-medium">{registration?.email}</div>
-                                {registration?.phone && (
-                                    <>
-                                        <span className="text-zinc-300 dark:text-zinc-700">•</span>
-                                        <div className="text-xs text-zinc-500 font-medium">{registration?.phone}</div>
-                                    </>
+                        </div>
+                        <div className="p-4">
+                            <div className="bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200/60 dark:border-zinc-800 overflow-hidden" style={{ height: 'calc(100vh - 380px)', minHeight: '300px' }}>
+                                {assignment.file_url ? (
+                                    <iframe
+                                        src={getPreviewUrl(assignment.file_url)}
+                                        className="w-full h-full border-none"
+                                        title="File Preview"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400 space-y-2">
+                                        <FileText className="w-10 h-10 opacity-20" />
+                                        <span className="text-xs font-semibold">File tidak tersedia</span>
+                                    </div>
                                 )}
                             </div>
                         </div>
-
-                        <div className="h-px bg-zinc-200/50 dark:bg-zinc-800" />
-
-                        <div className="space-y-1">
-                            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-                                <BookOpen className="w-3 h-3" /> Modul Pelatihan
-                            </Label>
-                            <div className="text-md font-bold text-zinc-800 dark:text-zinc-200">{training?.name}</div>
-                        </div>
                     </div>
                 </div>
 
-                {/* File Preview */}
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-                            <FileText className="w-3 h-3" /> Lampiran File
-                        </Label>
-                        <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold uppercase tracking-wider text-emerald-600 hover:text-emerald-700 p-0 hover:bg-transparent" asChild>
-                            <a href={assignment.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5">
-                                Buka Full <ExternalLink className="w-3 h-3" />
-                            </a>
-                        </Button>
-                    </div>
+                {/* ── RIGHT COLUMN ── Sticky Panel ── */}
+                <div className="border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-y-auto custom-scrollbar" style={{ flex: '0 0 38%' }}>
+                    <div className="sticky top-0 p-6 space-y-6">
 
-                    <div className="aspect-video bg-zinc-100 dark:bg-zinc-950 rounded-2xl border-2 border-zinc-200/50 dark:border-zinc-800 overflow-hidden relative group shadow-inner">
-                        {assignment.file_url ? (
-                            <iframe
-                                src={getPreviewUrl(assignment.file_url)}
-                                className="w-full h-full border-none"
-                                title="File Preview"
-                            />
-                        ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400 space-y-2">
-                                <FileText className="w-10 h-10 opacity-20" />
-                                <span className="text-xs font-bold uppercase tracking-widest italic">Link tidak valid</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Status History */}
-                {assignment.status !== 'pending' && (
-                    <div className={`p-5 rounded-2xl border-2 flex items-start gap-4 transition-all ${assignment.status === 'valid'
-                        ? 'bg-emerald-500/[0.03] border-emerald-500/20 text-emerald-900 dark:text-emerald-400'
-                        : 'bg-red-500/[0.03] border-red-500/20 text-red-900 dark:text-red-400'
-                        }`}>
-                        <div className={`p-2 rounded-xl ${assignment.status === 'valid' ? 'bg-emerald-50/50' : 'bg-red-50/50'
-                            }`}>
-                            {assignment.status === 'valid' ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
-                        </div>
-                        <div className="space-y-1">
-                            <div className="font-black text-[10px] uppercase tracking-[0.2em] opacity-60">Status Sekarang</div>
-                            <div className="font-bold text-sm tracking-tight">{assignment.status.toUpperCase()}</div>
-                            {assignment.feedback && (
-                                <>
-                                    <div className="h-px bg-current opacity-10 my-2" />
-                                    <div className="text-xs font-semibold leading-relaxed">"{assignment.feedback}"</div>
-                                </>
-                            )}
-                            {registration?.certificate_url && (
-                                <div className="pt-2">
-                                    <Button variant="link" size="sm" className="h-auto p-0 text-xs font-bold text-emerald-600 dark:text-emerald-400" asChild>
-                                        <a href={registration.certificate_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 mt-1">
-                                            <ExternalLink className="w-3 h-3" /> Lihat Sertifikat
-                                        </a>
-                                    </Button>
+                        {/* Status Section */}
+                        <div>
+                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-3">Status Verifikasi</h3>
+                            {assignment.status === 'pending' ? (
+                                <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50">
+                                    <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                                    <div>
+                                        <div className="text-sm font-bold text-amber-700 dark:text-amber-400">Menunggu Review</div>
+                                        <div className="text-[11px] text-amber-600/70 dark:text-amber-400/60 font-medium mt-0.5">Tugas belum diverifikasi</div>
+                                    </div>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* Action Form */}
-                {assignment.status === 'pending' && (
-                    <div className="space-y-6 pt-6 border-t border-zinc-100 dark:border-zinc-800">
-                        {isRejecting ? (
-                            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div className="space-y-2">
-                                    <Label htmlFor="feedback" className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">
-                                        Feedback Penolakan <span className="opacity-50">(Wajib)</span>
-                                    </Label>
-                                    <Textarea
-                                        id="feedback"
-                                        placeholder="Berikan alasan mengapa tugas ini belum bisa diterima..."
-                                        value={feedback}
-                                        onChange={(e) => setFeedback(e.target.value)}
-                                        className="min-h-[120px] rounded-2xl bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:ring-red-500/20 focus:border-red-500 transition-all font-medium text-sm"
-                                    />
-                                </div>
-                                <div className="flex gap-3">
-                                    <Button
-                                        className="flex-1 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-xs h-12 rounded-2xl shadow-lg shadow-red-500/20 transition-all"
-                                        onClick={() => handleAction('reject')}
-                                        disabled={loading}
-                                    >
-                                        {loading ? 'Mengirim...' : 'Konfirmasi Tolak'}
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        className="font-bold text-xs uppercase tracking-widest h-12 rounded-2xl"
-                                        onClick={() => {
-                                            setIsRejecting(false)
-                                            setFeedback('')
-                                        }}
-                                        disabled={loading}
-                                    >
-                                        Batal
-                                    </Button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-2 gap-4">
-                                <Button
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest text-xs h-14 rounded-2xl shadow-xl shadow-emerald-500/20 transition-all group"
-                                    onClick={() => handleAction('approve')}
-                                    disabled={loading}
-                                >
-                                    {loading ? 'Memproses...' : (
-                                        <span className="flex items-center gap-2">
-                                            Approve <CheckCircle2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                        </span>
+                            ) : assignment.status === 'valid' ? (
+                                <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0 shadow-md">
+                                            <CheckCircle2 className="w-5 h-5 text-white" />
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-bold text-emerald-700 dark:text-emerald-400">Disetujui</div>
+                                            <div className="text-[11px] text-emerald-600/70 dark:text-emerald-400/60 font-medium">Tugas dinyatakan lulus</div>
+                                        </div>
+                                    </div>
+                                    {validator?.full_name && (
+                                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 rounded-lg">
+                                            <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                                            Oleh: <strong>{validator.full_name}</strong>
+                                        </div>
                                     )}
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 dark:hover:border-red-900/50 font-black uppercase tracking-widest text-xs h-14 rounded-2xl transition-all"
-                                    onClick={() => setIsRejecting(true)}
-                                    disabled={loading}
-                                >
-                                    Reject
-                                </Button>
+                                    {registration?.certificate_url && (
+                                        <Button variant="default" size="sm" className="w-full h-9 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white" asChild>
+                                            <a href={registration.certificate_url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
+                                                <Award className="w-3.5 h-3.5" /> Sertifikat
+                                            </a>
+                                        </Button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shrink-0 shadow-md">
+                                            <XCircle className="w-5 h-5 text-white" />
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-bold text-red-700 dark:text-red-400">Ditolak</div>
+                                            <div className="text-[11px] text-red-600/70 dark:text-red-400/60 font-medium">Perlu perbaikan</div>
+                                        </div>
+                                    </div>
+                                    {validator?.full_name && (
+                                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-3 py-1.5 rounded-lg">
+                                            <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                                            Oleh: <strong>{validator.full_name}</strong>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Feedback display (for non-pending) */}
+                        {assignment.feedback && assignment.status !== 'pending' && (
+                            <div>
+                                <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Catatan</h3>
+                                <div className="text-sm font-medium leading-relaxed text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                                    &ldquo;{assignment.feedback}&rdquo;
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Divider */}
+                        {assignment.status === 'pending' && (
+                            <div className="h-px bg-zinc-200 dark:bg-zinc-800" />
+                        )}
+
+                        {/* Action Buttons (only for pending) */}
+                        {assignment.status === 'pending' && (
+                            <div className="space-y-4">
+                                <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Tindakan</h3>
+
+                                {!isRejecting ? (
+                                    <div className="space-y-3">
+                                        <Button
+                                            className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs h-11 rounded-xl shadow-lg shadow-emerald-500/15 transition-all"
+                                            onClick={() => handleAction('approve')}
+                                            disabled={loading}
+                                        >
+                                            {loading ? (
+                                                <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Memproses...</span>
+                                            ) : (
+                                                <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> Approve Tugas</span>
+                                            )}
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:text-red-600 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 dark:hover:border-red-800 font-bold text-xs h-11 rounded-xl transition-all"
+                                            onClick={() => setIsRejecting(true)}
+                                            disabled={loading}
+                                        >
+                                            <span className="flex items-center gap-2"><XCircle className="w-4 h-4" /> Reject Tugas</span>
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50">
+                                            <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                                            <span className="text-[11px] text-red-600 dark:text-red-400 font-semibold">Berikan alasan penolakan</span>
+                                        </div>
+
+                                        <Textarea
+                                            id="feedback"
+                                            placeholder="Tuliskan alasan penolakan..."
+                                            value={feedback}
+                                            onChange={(e) => setFeedback(e.target.value)}
+                                            className="min-h-[100px] rounded-xl bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus-visible:ring-red-500/30 focus-visible:border-red-400 transition-all text-sm font-medium resize-none"
+                                        />
+
+                                        <Button
+                                            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold text-xs h-11 rounded-xl shadow-lg shadow-red-500/15 transition-all"
+                                            onClick={() => handleAction('reject')}
+                                            disabled={loading || !feedback.trim()}
+                                        >
+                                            {loading ? (
+                                                <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Memproses...</span>
+                                            ) : (
+                                                <span className="flex items-center gap-2"><XCircle className="w-4 h-4" /> Konfirmasi Tolak</span>
+                                            )}
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full font-bold text-xs h-9 rounded-xl text-zinc-500"
+                                            onClick={() => { setIsRejecting(false); setFeedback('') }}
+                                            disabled={loading}
+                                        >
+                                            Batal
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
-                )}
+                </div>
             </div>
         </SheetContent>
     )

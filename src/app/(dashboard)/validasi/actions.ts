@@ -17,7 +17,8 @@ export async function getAssignments() {
         .select(`
             *,
             registrations (*),
-            trainings (*)
+            trainings (*),
+            validator:profiles!validator_id(full_name)
         `)
         .order('created_at', { ascending: false })
 
@@ -73,11 +74,15 @@ export async function updateAssignmentStatus(payload: {
 
         const supabase = await createClient()
 
+        // Get current user to save as validator
+        const { data: { user } } = await supabase.auth.getUser()
+        const validator_id = user?.id
+
         if (payload.action === 'approve') {
             // 1. Update status di tabel assignments (GAS sudah melakukan ini but we double check)
             const { error: assError } = await supabase
                 .from('assignments')
-                .update({ status: 'valid' })
+                .update({ status: 'valid', validator_id })
                 .eq('id', payload.assignment_id)
 
             if (assError) {
@@ -103,7 +108,8 @@ export async function updateAssignmentStatus(payload: {
             // Reject Logic - Menggunakan status 'invalid' sesuai standar GAS
             const { error: rejectAssError } = await supabase.from('assignments').update({
                 status: 'invalid', // BUKAN rejected
-                feedback: payload.feedback
+                feedback: payload.feedback,
+                validator_id
             }).eq('id', payload.assignment_id)
 
             if (rejectAssError) console.error('Reject Assignment Error:', rejectAssError)
