@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { use, useState, useMemo } from 'react'
 import { Category, Training, Registration, Assignment } from '@/types'
 import { Sheet, SheetTrigger } from '@/components/ui/sheet'
 import { ParticipantListSheet } from './participant-list-sheet'
@@ -21,11 +21,15 @@ import {
 import Image from 'next/image'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 
-interface PesertaClientProps {
+interface PesertaData {
     categories: Category[]
     trainings: Training[]
     registrations: Registration[]
     assignments: Assignment[]
+}
+
+interface PesertaClientProps {
+    dataPromise: Promise<PesertaData>
 }
 
 // Color palette aligned to educational levels
@@ -37,7 +41,8 @@ const CATEGORY_CONFIG: Record<string, { bg: string; icon: string; dot: string; c
     'default': { bg: 'bg-zinc-50 dark:bg-zinc-800', icon: 'text-zinc-500', dot: 'bg-zinc-400', chartColor: '#a1a1aa' },
 }
 
-export function PesertaClient({ categories, trainings, registrations, assignments }: PesertaClientProps) {
+export function PesertaClient({ dataPromise }: PesertaClientProps) {
+    const { categories, trainings, registrations, assignments } = use(dataPromise)
     const [searchQuery, setSearchQuery] = useState('')
 
     const getParticipantsForTraining = (trainingId: string) =>
@@ -254,7 +259,7 @@ export function PesertaClient({ categories, trainings, registrations, assignment
                         <div className="p-5">
                             {/* Donut Chart */}
                             {chartData.length > 0 ? (
-                                <div className="relative">
+                                <div className="relative min-h-[180px]">
                                     <ResponsiveContainer width="100%" height={180}>
                                         <PieChart>
                                             <Pie
