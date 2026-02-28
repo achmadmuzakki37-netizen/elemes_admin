@@ -6,6 +6,7 @@ import { Header } from '@/components/admin/header';
 import { getCurrentProfile } from './profile/actions';
 import { useEffect, useState } from 'react';
 import { Profile } from '@/types';
+import { IdleTimeoutProvider } from '@/components/providers/idle-timeout-provider';
 
 export default function DashboardLayout({
     children,
@@ -22,21 +23,23 @@ export default function DashboardLayout({
     return (
         <div className="flex h-screen overflow-hidden bg-white dark:bg-zinc-950">
             <Toaster position="top-right" richColors />
-            <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-            <div className="flex flex-col flex-1 overflow-hidden">
-                {profile && (
-                    <Header
-                        profile={profile}
-                        collapsed={collapsed}
-                        setCollapsed={setCollapsed}
-                    />
-                )}
-                <main className="flex-1 bg-zinc-50/50 dark:bg-zinc-900/10 overflow-y-auto custom-scrollbar">
-                    <div className="p-6">
-                        {children}
-                    </div>
-                </main>
-            </div>
+            <IdleTimeoutProvider>
+                <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+                <div className="flex flex-col flex-1 overflow-hidden">
+                    {profile && (
+                        <Header
+                            profile={profile}
+                            collapsed={collapsed}
+                            setCollapsed={setCollapsed}
+                        />
+                    )}
+                    <main className="flex-1 bg-zinc-50/50 dark:bg-zinc-900/10 overflow-y-auto custom-scrollbar">
+                        <div className="p-6">
+                            {children}
+                        </div>
+                    </main>
+                </div>
+            </IdleTimeoutProvider>
         </div>
     );
 }
